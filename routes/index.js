@@ -12,7 +12,7 @@ var helper = require("../helper");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
-  res.render("index", { title: "Express" });
+  res.send("It works!");
 });
 
 router.post("/enterance-departure/:MMSI", function (req, res) {
@@ -42,16 +42,16 @@ router.get("/enterance-departure/:MMSI", function (req, res) {
 
   db.get().collection("AIS").find({}).limit(1).sort({$natural: 1}).toArray(function(messageList, err) {
     if(err) throw err;
-    res.json.messageList[0];
+    res.json(messageList[0]);
   })
 });
 
 router.get("/ais-statistics", function (req, res) {
-  db.get().collection("AIS").find().toArray(function(err, messageList) {
-    if(err) throw err;
-    let statistics = {}
-    messageList.forEach(function(item, i)
-  })
+  // db.get().collection("AIS").find().toArray(function(err, messageList) {
+  //   if(err) throw err;
+  //   let statistics = {}
+  //   messageList.forEach(function(item, i)
+  // })
 });
 
 router.post("/TrafficService/:timestamp", function (req, res) {
