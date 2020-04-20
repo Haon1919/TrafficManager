@@ -55,7 +55,8 @@ router.get("/ais-statistics", function (req, res) {
 });
 
 router.post("/TrafficService/:timestamp", function (req, res) {
-  let message = req.body[0];
+  let message = req.body;
+  console.log(req);
 
   if (message !== undefined && message !== null) delete message._id;
 
@@ -83,6 +84,18 @@ router.get("/AIS/fetch-latest/:identification", function (req, res) {
       if (err) throw err;
       res.json(messageList[0]);
     });
+});
+
+router.get("/AIS/fetch-latest", function(req, res) {
+  db.get()
+  .collection("AIS")
+  .find({})
+  .limit(1)
+  .sort({ $natural: -1 })
+  .toArray(function (err, messageList) {
+    if (err) throw err;
+    res.json(messageList[0]);
+  });
 });
 
 module.exports = router;
