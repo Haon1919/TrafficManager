@@ -3,19 +3,7 @@ var router = express.Router();
 var db = require("../db");
 var helper = require("../helper");
 
-//TODO: Create post route that logs ais data it recieves
-///TrafficService/2018-09-11T10:39:05.000Z
-//TODO: Create get that fetches AIS informathion based on ship identification
-//TODO: Upload enterence and departure information
-//TODO: only vessels that send messages from a class A AIS transceiver, i.e. only the larger, commercial ships on an international voyage are to be monitored
-//TODO: production of AIS statistics
-
-/* GET home page. */
-router.get("/", function (req, res, next) {
-  res.send("It works!");
-});
-
-router.post("/enterance-departure/:MMSI", function (req, res) {
+router.post("/enterance-departure/:MMSI", (req, res) => {
   let MMSI = req.params.MMSI;
 
   if (!helper.checkParams(["ETD", "ETA"], req.body)) {
@@ -37,12 +25,11 @@ router.post("/enterance-departure/:MMSI", function (req, res) {
   res.send(req.body);
 });
 
-router.get("/enterance-departure/:identification", function (req, res) {
+router.get("/enterance-departure/:identification", (req, res) => {
   let identification = req.params.identification;
-  //TODO: Add nested query
   db.get()
     .collection("AIS")
-    .find({ $or: [{ MMSI: identification }, { IMO: identification }] })
+    .find({ $or: [{ MMSI: identification }, {"StaticData.IMO" : identification }] })
     .limit(1)
     .sort({ $natural: 1 })
     .toArray(function (messageList, err) {
@@ -51,7 +38,7 @@ router.get("/enterance-departure/:identification", function (req, res) {
     });
 });
 
-router.get("/ais-statistics", function (req, res) {
+router.get("/ais-statistics", (req, res) => {
   // db.get().collection("AIS").find().toArray(function(err, messageList) {
   //   if(err) throw err;
   //   let statistics = {}
@@ -59,7 +46,7 @@ router.get("/ais-statistics", function (req, res) {
   // })
 });
 
-router.post("/TrafficService/:timestamp", function (req, res) {
+router.post("/TrafficService/:timestamp",  (req, res) => {
   let message = req.body;
 
   if (message !== undefined && message !== null) {
@@ -75,16 +62,16 @@ router.post("/TrafficService/:timestamp", function (req, res) {
 
     db.get()
       .collection("AIS")
-      .insertOne(message, function (err, queryRes) {
+      .insertMany(message, function (err, queryRes) {
         if (err) throw err;
-        res.send(queryRes.ops[0]);
+        res.send(queryRes.ops);
       });
   }
 });
 
-router.get("/AIS/fetch-latest/:identification", function (req, res) {
+router.get("/AIS/fetch-latest/:identification", (req, res) => {
   let identification = parseInt(req.params.identification);
-
+  
   db.get()
     .collection("AIS")
     .find({
@@ -107,7 +94,7 @@ router.get("/AIS/fetch-latest/:identification", function (req, res) {
     });
 });
 
-router.get("/AIS/list/:identification", function (req, res) {
+router.get("/AIS/list/:identification", (req, res) => {
   let identification = parseInt(req.params.identification);
 
   db.get()

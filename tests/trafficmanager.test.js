@@ -87,18 +87,15 @@ describe("Traffic Manager", () => {
 
   afterAll(async () => db.close());
 
-  it("Successfully handles an AIS request", async () => {
-    let res = await request(server)
-      .post("/TrafficService/now")
-      .send(testAISmessages[0]);
-
+  it("Handles AIS logging messages successfully", async () => {
+    let res = await request(server).post("/TrafficService/now").send(testAISmessages);
+    
     expect(res.status).toBe(200);
-    expect(res.body.MMSI).toBe(testAISmessages[0].MMSI);
-    expect(res.body.StaticData.Name).toBe(testAISmessages[0].StaticData.Name);
+    expect(res.body.length).toBe(2);
   });
 
   it("Retrieves AIS messages by MMSI", async () => {
-    await request(server).post("/TrafficService/now").send(testAISmessages[0]);
+    await request(server).post("/TrafficService/now").send([testAISmessages[0]]);
 
     let res = await request(server).get(
       `/AIS/fetch-latest/${testAISmessages[0].MMSI}`
@@ -110,8 +107,7 @@ describe("Traffic Manager", () => {
   });
 
   it("Retrieves the latest AIS messages when querying by MMSI", async () => {
-    await request(server).post("/TrafficService/now").send(testAISmessages[0]);
-    await request(server).post("/TrafficService/now").send(testAISmessages[1]);
+    await request(server).post("/TrafficService/now").send(testAISmessages);
 
     let res = await request(server).get(
       `/AIS/fetch-latest/${testAISmessages[1].MMSI}`
@@ -123,8 +119,7 @@ describe("Traffic Manager", () => {
   });
 
   it("Returns a list of AIS messages when querying for a list for a given MMSI", async () => {
-    await request(server).post("/TrafficService/now").send(testAISmessages[0]);
-    await request(server).post("/TrafficService/now").send(testAISmessages[1]);
+    await request(server).post("/TrafficService/now").send(testAISmessages);
 
     let res = await request(server).get(`/AIS/list/${testAISmessages[0].MMSI}`);
     expect(res.status).toBe(200);
@@ -138,7 +133,7 @@ describe("Traffic Manager", () => {
   });
 
   it("Retrieves AIS messages by IMO", async () => {
-    await request(server).post("/TrafficService/now").send(testAISmessages[0]);
+    await request(server).post("/TrafficService/now").send([testAISmessages[0]]);
 
     let res = await request(server).get(
       `/AIS/fetch-latest/${testAISmessages[0].StaticData.IMO}`
@@ -151,8 +146,7 @@ describe("Traffic Manager", () => {
   });
 
   it("Retrieves the latest AIS messages when querying by IMO", async () => {
-    await request(server).post("/TrafficService/now").send(testAISmessages[0]);
-    await request(server).post("/TrafficService/now").send(testAISmessages[1]);
+    await request(server).post("/TrafficService/now").send(testAISmessages);
 
     let res = await request(server).get(
       `/AIS/fetch-latest/${testAISmessages[0].StaticData.IMO}`
@@ -165,8 +159,7 @@ describe("Traffic Manager", () => {
   });
 
   it("Returns a list of AIS messages when querying for a list for a given IMO", async () => {
-    await request(server).post("/TrafficService/now").send(testAISmessages[0]);
-    await request(server).post("/TrafficService/now").send(testAISmessages[1]);
+    await request(server).post("/TrafficService/now").send(testAISmessages);
 
     let res = await request(server).get(`/AIS/list/${testAISmessages[0].StaticData.IMO}`);
     expect(res.status).toBe(200);
@@ -175,8 +168,7 @@ describe("Traffic Manager", () => {
   
   //IMO was used in this case but this test covers querying by MMSI as well
   it("Returns a 404 when of when querying for a list for a given IMO that has no AIS messages associated with it", async () => {
-    await request(server).post("/TrafficService/now").send(testAISmessages[0]);
-    await request(server).post("/TrafficService/now").send(testAISmessages[1]);
+    await request(server).post("/TrafficService/now").send(testAISmessages);
 
     let res = await request(server).get(`/AIS/list/${invalidIMO}`);
     expect(res.status).toBe(404);

@@ -40,11 +40,6 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-db.connect('mongodb://localhost:27017/TrafficManager', function(err) {
-  if (err) {
-    console.log('Unable to connect to Mongo.')
-    process.exit(1)
-  }
-});
+db.connect('mongodb://localhost:27017/TrafficManager');
 
 module.exports = app;
