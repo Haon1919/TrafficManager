@@ -29,7 +29,9 @@ router.get("/enterance-departure/:identification", (req, res) => {
   let identification = req.params.identification;
   db.get()
     .collection("AIS")
-    .find({ $or: [{ MMSI: identification }, {"StaticData.IMO" : identification }] })
+    .find({
+      $or: [{ MMSI: identification }, { "StaticData.IMO": identification }],
+    })
     .limit(1)
     .sort({ $natural: 1 })
     .toArray(function (messageList, err) {
@@ -46,32 +48,38 @@ router.get("/ais-statistics", (req, res) => {
   // })
 });
 
-router.post("/TrafficService/:timestamp",  (req, res) => {
-  let message = req.body;
+router.post("/TrafficService/:timestamp", (req, res) => {
+  let messages = req.body;
 
-  if (message !== undefined && message !== null) {
-    delete message._id;
-
+  if (messages !== undefined && messages !== null) {
     db.get()
       .listCollections({ name: "AIS" })
       .toArray(function (err, items) {
         if (err) throw err;
-        //Account for if there is more than one collection
-        if (items.length !== 1) db.get().createCollection("AIS");
+        if (items.length !== 1) {
+          db.get().createCollection("AIS");
+          db.get()
+            .collection("AIS")
+            .insertMany(message, function (err, queryRes) {
+              if (err) throw err;
+              res.send(queryRes.ops);
+            });
+        } else {
+          messages.forEach((message) => {
+            db.get()
+              .collection("AIS")
+              .replaceOne({ MMSI: message.MMSI }, message, { upsert: true });
+          });
+        }
       });
-
-    db.get()
-      .collection("AIS")
-      .insertMany(message, function (err, queryRes) {
-        if (err) throw err;
-        res.send(queryRes.ops);
-      });
+    //Uncomment when ready to implement removing old messages
+    //helper.clearOldMessages(db);
   }
 });
 
 router.get("/AIS/fetch-latest/:identification", (req, res) => {
   let identification = parseInt(req.params.identification);
-  
+
   db.get()
     .collection("AIS")
     .find({
