@@ -3,30 +3,36 @@ var router = express.Router();
 var db = require("../db");
 var helper = require("../helper");
 
-router.post("/enterance-departure/:MMSI", (req, res) => {
-  let MMSI = req.params.MMSI;
-
-  if (!helper.checkParams(["ETD", "ETA"], req.body)) {
-    res.status(400).send("Malformed request.");
-  }
+router.post("/enterance-departure", (req, res) => {
+  // if (
+  //   !helper.checkParams(["ETD", "ETA", "destination", "MMSI", "IMO"], req.body)
+  // ) {
+  //   res.status(400).send("Malformed request.");
+  // }
 
   db.get()
     .listCollections({ name: "EnteranceDepartureData" })
     .toArray(function (err, items) {
-      if (err) throw err;
+      if (err) {
+        return res.status(500).send(err);
+      }
       //Account for if there is more than one collection
       if (items.length !== 1)
         db.get().createCollection("EnteranceDepartureData");
     });
 
-  req.body["MMSI"] = MMSI;
-  db.get().collection("EnteranceDepartureData").insertOne(req.body);
+  try {
+    db.get().collection("EnteranceDepartureData").insertOne(req.body);
+  } catch (e) {
+    return res.status(500).send("Error inserting data.");
+  }
 
   res.send(req.body);
 });
 
 router.get("/enterance-departure/:identification", (req, res) => {
   let identification = req.params.identification;
+
   db.get()
     .collection("AIS")
     .find({
@@ -35,8 +41,13 @@ router.get("/enterance-departure/:identification", (req, res) => {
     .limit(1)
     .sort({ $natural: 1 })
     .toArray(function (messageList, err) {
-      if (err) throw err;
-      res.json(messageList[0]);
+      if (err) {
+        console.log("caught an error")
+        return res.status(500).send(err);
+      }
+      console.log("returning successfully")
+
+      res.send(messageList[0]);
     });
 });
 
@@ -55,25 +66,32 @@ router.post("/TrafficService/:timestamp", (req, res) => {
     db.get()
       .listCollections({ name: "AIS" })
       .toArray(function (err, items) {
-        if (err) throw err;
-        if (items.length !== 1) {
+        if (err) {
+          return res.status(500).send(err);
+        }
+        if (!items.length) {
           db.get().createCollection("AIS");
           db.get()
             .collection("AIS")
-            .insertMany(message, function (err, queryRes) {
+            .insertMany(messages, function (err, queryRes) {
               if (err) throw err;
               res.send(queryRes.ops);
             });
         } else {
           messages.forEach((message) => {
-            db.get()
-              .collection("AIS")
-              .replaceOne({ MMSI: message.MMSI }, message, { upsert: true });
+            delete message._id;
+            try {
+              db.get()
+                .collection("AIS")
+                .replaceOne({ MMSI: message.MMSI }, message, { upsert: true });
+            } catch (e) {
+              return res.status(500).send(e);
+            }
           });
+          res.send(messages);
         }
       });
-    //Uncomment when ready to implement removing old messages
-    //helper.clearOldMessages(db);
+    helper.clearOldMessages(db);
   }
 });
 
@@ -88,7 +106,9 @@ router.get("/AIS/fetch-latest/:identification", (req, res) => {
     .limit(1)
     .sort({ $natural: -1 })
     .toArray(function (err, messageList) {
-      if (err) throw err;
+      if (err) {
+        return res.status(500).send(err);
+      }
 
       if (messageList.length === 0) {
         res
@@ -102,26 +122,34 @@ router.get("/AIS/fetch-latest/:identification", (req, res) => {
     });
 });
 
-router.get("/AIS/list/:identification", (req, res) => {
-  let identification = parseInt(req.params.identification);
-
+router.get("/AIS/list", (_, res) => {
   db.get()
     .collection("AIS")
-    .find({
-      $or: [{ MMSI: identification }, { "StaticData.IMO": identification }],
-    })
+    .find({})
     .toArray(function (err, messageList) {
-      if (err) throw err;
+      if (err) {
+        return res.status(500).send(err);
+      }
 
       if (messageList.length === 0) {
-        res
-          .status(404)
-          .send(
-            `No AIS messages assosiated with an MMSI or IMO of ${identification}`
-          );
-      } else {
-        res.send(messageList);
+        return res.status(404).send("No AIS messages are currently available.");
       }
+
+      messageList.forEach((mes) =>
+        mes.PositionReport.Position.coordinates.reverse()
+      );
+      helper.clearOldMessages(db);
+      res.header("Access-Control-Allow-Origin", "http://localhost:8080");
+      res.header("Access-Control-Allow-Credentials", "true");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Origin,Content-Type, Authorization, x-id, Content-Length, X-Requested-With"
+      );
+      res.header(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, OPTIONS"
+      );
+      res.send(messageList);
     });
 });
 

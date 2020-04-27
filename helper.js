@@ -8,16 +8,19 @@ exports.checkParams = (keys, obj) => {
 };
 
 exports.clearOldMessages = db => {
-  let now = moment;
+  let now = moment();
 
   db.get()
     .collection("AIS")
+    .find({})
     .toArray((err, messages) => {
       if (err) throw error;
+      
 
       messages.forEach((message) => {
+        // console.log(`${message.StaticData.Name}: ${message.Timestamp}`)
         if (moment(message.Timestamp).isBefore(now.subtract(30, "seconds"))) {
-          db.get().remove({ MMSI: messages.MMSI }, { justOne: true });
+          db.get().collection("AIS").deleteOne({ MMSI: messages.MMSI });
         }
       });
     });
