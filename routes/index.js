@@ -4,11 +4,11 @@ var db = require("../db");
 var helper = require("../helper");
 
 router.post("/enterance-departure", (req, res) => {
-  // if (
-  //   !helper.checkParams(["ETD", "ETA", "destination", "MMSI", "IMO"], req.body)
-  // ) {
-  //   res.status(400).send("Malformed request.");
-  // }
+  if (
+    !helper.checkParams(["destination", "MMSI", "IMO"], req.body)
+  ) {
+    res.status(400).send("Malformed request.");
+  }
 
   db.get()
     .listCollections({ name: "EnteranceDepartureData" })
@@ -31,32 +31,84 @@ router.post("/enterance-departure", (req, res) => {
 });
 
 router.get("/enterance-departure/:identification", (req, res) => {
-  let identification = req.params.identification;
+  let identification = parseInt(req.params.identification);
 
   db.get()
-    .collection("AIS")
+    .collection("EnteranceDepartureData")
     .find({
-      $or: [{ MMSI: identification }, { "StaticData.IMO": identification }],
+      $or: [{ MMSI: identification }, { IMO: identification }],
     })
     .limit(1)
     .sort({ $natural: 1 })
-    .toArray(function (messageList, err) {
+    .toArray(function (err, messageList) {
       if (err) {
-        console.log("caught an error")
         return res.status(500).send(err);
       }
-      console.log("returning successfully")
+
+      if(messageList.length === 0) {
+        return res.status(404).send(`No messages found with MMSI or IMO of ${identification}`);
+      }
 
       res.send(messageList[0]);
     });
 });
 
 router.get("/ais-statistics", (req, res) => {
-  // db.get().collection("AIS").find().toArray(function(err, messageList) {
-  //   if(err) throw err;
-  //   let statistics = {}
-  //   messageList.forEach(function(item, i)
-  // })
+  db.get().collection("AIS").find().toArray(function(err, messageList) {
+    if(err) throw err;
+
+    if(messageList.length === 0) {
+      return res.status(404).send("No AIS statistics could be calculated because there are currently no AIS messages in the system");
+    }
+
+    let statistics = {
+      destinations: [],
+      averageSOG: 0,
+      totalMoored: 0,
+      totalUnderway: 0,
+      vesselTypeCount: {},
+      totalVessels: 0
+    }
+
+    let totalSOG = 0;
+
+    messageList.forEach(item =>{  
+      if(item.StaticData.Destination !== undefined && !statistics.destinations.includes(item.StaticData.Destination)) {
+        statistics.destinations.push(item.StaticData.Destination)
+      }
+
+      if(Object.keys(statistics.vesselTypeCount).includes(item.StaticData.VesselType)) {
+        statistics.vesselTypeCount[[item.StaticData.VesselType]] += 1
+      } else {
+        statistics.vesselTypeCount[[item.StaticData.VesselType]] = 1;
+      }
+
+      if(item.PositionReport.NavigationalStatus === "Moored") {
+        statistics.totalMoored += 1;
+      } else {
+        statistics.totalUnderway += 1;
+      }
+
+      totalSOG += item.PositionReport.SoG;
+    });
+
+    statistics.averageSOG = totalSOG / messageList.length;
+
+    statistics.totalVessels = messageList.length;
+
+    res.header("Access-Control-Allow-Origin", "http://localhost:8080");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin,Content-Type, Authorization, x-id, Content-Length, X-Requested-With"
+    );
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS"
+    );
+
+    res.send(statistics);
+  })
 });
 
 router.post("/TrafficService/:timestamp", (req, res) => {

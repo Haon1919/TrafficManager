@@ -130,145 +130,131 @@ describe("Traffic Manager", () => {
     }
   });
 
-  afterEach(async () => db.clearDatabase());
+ afterEach(async () => db.clearDatabase());
 
   afterAll(async () => db.close());
 
-  // it("Handles AIS logging messages successfully", async () => {
-  //   let res = await request(server)
-  //     .post("/TrafficService/now")
-  //     .send(testAISmessages);
+  it("Handles AIS logging messages successfully", async () => {
+    let res = await request(server)
+      .post("/TrafficService/now")
+      .send(testAISmessages);
 
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.length).toBe(2);
-  // });
-
-  // it("Retrieves list of AIS messages", async () => {
-  //   await request(server).post("/TrafficService/now").send(testAISmessages);
-  //   let res = await request(server).get("/AIS/list");
-
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.length).toBe(2);
-  // });
-
-
-  // it("Updates AIS message if one with the same identification exists in the databse", async () => {
-  //    await request(server)
-  //   .post("/TrafficService/now")
-  //   .send([testAISmessages[0]]);
-
-  //    await request(server)
-  //   .post("/TrafficService/now")
-  //   .send([testAISmessages[0]]);
-
-  //   let res = await request(server).get("/AIS/list");
-
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.length).toBe(1);
-  // });
-
-  it("Cleans database of AIS messages that occured before a certain threshold from the time a request was made even if a message was not transmitted by that vessel", async () => {
-    await request(server)
-    .post("/TrafficService/now")
-    .send([obsoleteUniqueAIS]);
-
-    await request(server)
-    .post("/TrafficService/now")
-    .send(testAISmessages);
-
-    let res = await request(server).get("/AIS/list");
-    
     expect(res.status).toBe(200);
-    expect(res.body.length).toBe(2)
+    expect(res.body.length).toBe(2);
   });
 
-  // it("Cleans database of AIS messages that occured before a certain threshold from the time a request was made when retrieving a list of AIS messages", async() => {
-  //   await request(server)
-  //   .post("/TrafficService/now")
-  //   .send([obsoleteUniqueAIS, ...testAISmessages]);
+  it("Retrieves list of AIS messages", async () => {
+    await request(server).post("/TrafficService/now").send(testAISmessages);
+    let res = await request(server).get("/AIS/list");
 
-  //   let res = await request(server).get("/AIS/list");
-    
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.length).toBe(2)
-  // });
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(2);
+  });
 
-  // it("Handles enterance/departure information", async () => {
-  //   let res = await request(server).post("/enterance-departure").send(entDepartInfo);
 
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.ETA).toBe(entDepartInfo.ETA);
-  //   expect(res.body.ETD).toBe(entDepartInfo.ETD);
-  //   expect(res.body.destination).toBe(entDepartInfo.destination);
-  //   expect(res.body.MMSI).toBe(entDepartInfo.MMSI);
-  //   expect(res.body.IMO).toBe(entDepartInfo.IMO);
-  // });
+  it("Updates AIS message if one with the same identification exists in the databse", async () => {
+     await request(server)
+    .post("/TrafficService/now")
+    .send([testAISmessages[0]]);
 
-  // it("Retrieves enterance/departure information by MMSI", async () => {
-  //   await request(server).post("/enterance-departure").send(entDepartInfo);
+     await request(server)
+    .post("/TrafficService/now")
+    .send([testAISmessages[0]]);
 
-  //   let res = request(server).get(`/enterance-departure/${entDepartInfo.MMSI}`);
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.MMSI).toBe(entDepartInfo.MMSI);
-  // });
+    let res = await request(server).get("/AIS/list");
 
-  // it("Retrieves enterance/departure information by IMO", async () => {
-  //   await request(server).post("/enterance-departure").send(entDepartInfo);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(1);
+  });
 
-  //   let res = request(server).get(`/enterance-departure/${entDepartInfo.IMO}`);
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.IMO).toBe(entDepartInfo.IMO);
-  // });
+  it("Handles enterance/departure information", async () => {
+    let res = await request(server).post("/enterance-departure").send(entDepartInfo);
 
-  // it("Returns a 404 when querying for enterance/departure information by nonexistant MMSI", async () => {
-  //   let res = await request(server).get(`/enterance-departure/${invalidMMSI}`);
-  //   expect(res.status).toBe(404);
-  // });
+    expect(res.status).toBe(200);
+    expect(res.body.ETA).toBe(entDepartInfo.ETA);
+    expect(res.body.ETD).toBe(entDepartInfo.ETD);
+    expect(res.body.destination).toBe(entDepartInfo.destination);
+    expect(res.body.MMSI).toBe(entDepartInfo.MMSI);
+    expect(res.body.IMO).toBe(entDepartInfo.IMO);
+  });
 
-  // it("Returns a 404 when querying for enterance/departure information by nonexistant IMO", async () => {
-  //   let res = await request(server).get(`/enterance-departure/${invalidMMSI}`);
-  //   expect(res.status).toBe(404);
-  // });
+  it("Retrieves enterance/departure information by MMSI", async () => {
+    await request(server).post("/enterance-departure").send(entDepartInfo);
 
-  // it("Retrieves AIS messages by MMSI", async () => {
-  //   await request(server)
-  //     .post("/TrafficService/now")
-  //     .send([testAISmessages[0]]);
+    let res = await request(server).get(`/enterance-departure/${entDepartInfo.MMSI}`);
 
-  //   let res = await request(server).get(
-  //     `/AIS/fetch-latest/${testAISmessages[0].MMSI}`
-  //   );
+    expect(res.status).toBe(200);
+    expect(res.body.MMSI).toBe(entDepartInfo.MMSI);
+  });
 
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.MMSI).toBe(testAISmessages[0].MMSI);
-  //   expect(res.body.StaticData.Name).toBe(testAISmessages[0].StaticData.Name);
-  // });
+  it("Retrieves enterance/departure information by IMO", async () => {
+    await request(server).post("/enterance-departure").send(entDepartInfo);
 
-  // //TODO make return single entry and state that this endpoint applies to MMSI aswell
-  // it("Retrieves AIS message when querying by IMO", async () => {
-  //   await request(server).post("/TrafficService/now").send(testAISmessages);
+    let res = await request(server).get(`/enterance-departure/${entDepartInfo.IMO}`);
+    expect(res.status).toBe(200);
+    expect(res.body.IMO).toBe(entDepartInfo.IMO);
+  });
 
-  //   let res = await request(server).get(
-  //     `/AIS/fetch-latest/${testAISmessages[0].StaticData.IMO}`
-  //   );
+  it("Returns a 404 when querying for enterance/departure information by nonexistant MMSI", async () => {
+    let res = await request(server).get(`/enterance-departure/${invalidMMSI}`);
+    expect(res.status).toBe(404);
+  });
 
-  //   expect(res.status).toBe(200);
-  //   expect(res.body.MMSI).toBe(testAISmessages[1].MMSI);
-  //   expect(res.body.StaticData.IMO).toBe(testAISmessages[1].StaticData.IMO);
-  //   expect(res.body.StaticData.Name).toBe(testAISmessages[1].StaticData.Name);
-  // });
+  it("Returns a 404 when querying for enterance/departure information by nonexistant IMO", async () => {
+    let res = await request(server).get(`/enterance-departure/${invalidMMSI}`);
+    expect(res.status).toBe(404);
+  });
 
-  // //MMSI was used in this case but this test covers querying by IMO as well
-  // it("Returns a 404 when querying by an MMSI that has no AIS messages associated with it", async () => {
-  //   let res = await request(server).get(`/AIS/fetch-latest/${invalidMMSI}`);
-  //   expect(res.status).toBe(404);
-  // });
+  it("Retrieves AIS messages by MMSI", async () => {
+    await request(server)
+      .post("/TrafficService/now")
+      .send([testAISmessages[0]]);
 
-  // it("Returns a 404 when querying by an IMO that has no AIS messages associated with it", async () => {
-  //   let res = await request(server).get(`/AIS/fetch-latest/${invalidIMO}`);
-  //   expect(res.status).toBe(404);
-  // });
+    let res = await request(server).get(
+      `/AIS/fetch-latest/${testAISmessages[0].MMSI}`
+    );
 
-  // //implement when AIS statistics works
-  // it("Returns AIS statistics", () => {});
+    expect(res.status).toBe(200);
+    expect(res.body.MMSI).toBe(testAISmessages[0].MMSI);
+    expect(res.body.StaticData.Name).toBe(testAISmessages[0].StaticData.Name);
+  });
+
+  //TODO make return single entry and state that this endpoint applies to MMSI aswell
+  it("Retrieves AIS message when querying by IMO", async () => {
+    await request(server).post("/TrafficService/now").send(testAISmessages);
+
+    let res = await request(server).get(
+      `/AIS/fetch-latest/${testAISmessages[0].StaticData.IMO}`
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.MMSI).toBe(testAISmessages[1].MMSI);
+    expect(res.body.StaticData.IMO).toBe(testAISmessages[1].StaticData.IMO);
+    expect(res.body.StaticData.Name).toBe(testAISmessages[1].StaticData.Name);
+  });
+
+  //MMSI was used in this case but this test covers querying by IMO as well
+  it("Returns a 404 when querying by an MMSI that has no AIS messages associated with it", async () => {
+    let res = await request(server).get(`/AIS/fetch-latest/${invalidMMSI}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("Returns a 404 when querying by an IMO that has no AIS messages associated with it", async () => {
+    let res = await request(server).get(`/AIS/fetch-latest/${invalidIMO}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("Returns AIS statistics", async () => {
+    await request(server).post("/TrafficService/now").send(testAISmessages);
+
+    let res = await request(server).get("/ais-statistics");
+
+    expect(res.status).toBe(200);
+    expect(Object.keys(res.body).includes("destinations")).toBe(true);
+    expect(Object.keys(res.body).includes("averageSOG")).toBe(true);
+    expect(Object.keys(res.body).includes("totalMoored")).toBe(true);
+    expect(Object.keys(res.body).includes("totalUnderway")).toBe(true);
+    expect(Object.keys(res.body).includes("vesselTypeCount")).toBe(true);
+    expect(Object.keys(res.body).includes("totalVessels")).toBe(true);
+  });
 });
