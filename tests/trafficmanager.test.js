@@ -74,40 +74,6 @@ const testAISmessages = [
   },
 ];
 
-const obsoleteUniqueAIS = {
-    Class: "Class A",
-    ETA: "2019-08-26T18:41:00.000Z",
-    ICES_Rect: 4421,
-    MMSI: 219385002,
-    PositionReport: {
-      CoG: 12.8,
-      Heading: 276,
-      NavigationalStatus: "Under way using engine",
-      Position: {
-        coordinates: [12.501658, 55.610765],
-        type: "Point",
-      },
-      RoT: 0,
-      SoG: 0,
-    },
-    StaticData: {
-      A: 53,
-      B: 10,
-      Breadth: 9,
-      C: 4,
-      CallSign: "OXGA",
-      D: 5,
-      DataSourceType: "AIS",
-      Destination: "FAKSE BUGT",
-      IMO: 5161158,
-      Length: 63,
-      Name: "FakeObsoleteAISMESSAGE",
-      PositionFixingDevice: "GPS",
-      VesselType: "Dredging",
-    },
-    Timestamp: moment(testAISmessages[0].Timestamp).subtract(1, "minute").toISOString(),
-}
-
 const entDepartInfo = {
   ETA: testAISmessages[0].ETA,
   ETD: testAISmessages[0].ETD,
@@ -219,7 +185,6 @@ describe("Traffic Manager", () => {
     expect(res.body.StaticData.Name).toBe(testAISmessages[0].StaticData.Name);
   });
 
-  //TODO make return single entry and state that this endpoint applies to MMSI aswell
   it("Retrieves AIS message when querying by IMO", async () => {
     await request(server).post("/TrafficService/now").send(testAISmessages);
 
